@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Diet and Fitness Tracker</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <section id="authScreen" class="auth-screen">
+    <div class="auth-visual">
+      <p class="eyebrow">Personal health workspace</p>
+      <h1>Smart Diet and Fitness Tracker</h1>
+      <p>Track meals, workouts, hydration, and daily goals from one focused dashboard.</p>
+    </div>
+
+    <div class="auth-panel">
+      <div class="auth-tabs" role="tablist" aria-label="Authentication">
+        <button id="loginTab" class="tab active" type="button">Login</button>
+        <button id="registerTab" class="tab" type="button">Register</button>
+      </div>
+
+      <form id="loginForm" class="auth-form" autocomplete="off">
+        <h2>Welcome Back</h2>
+        <input name="email" type="email" placeholder="Enter your email" autocomplete="off" required>
+        <input name="password" type="password" placeholder="Enter your password" autocomplete="new-password" required>
+        <button type="submit">Login</button>
+      </form>
+
+      <form id="registerForm" class="auth-form hidden">
+        <h2>Create Account</h2>
+        <input name="name" placeholder="Full name" autocomplete="name" required>
+        <input name="email" type="email" placeholder="Email" autocomplete="email" required>
+        <input name="password" type="password" placeholder="Password" autocomplete="new-password" minlength="6" required>
+        <button type="submit">Register</button>
+      </form>
+    </div>
+  </section>
+
+  <div id="appScreen" class="hidden">
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">Daily wellness dashboard</p>
+      <h1>Smart Diet and Fitness Tracker</h1>
+    </div>
+    <div class="top-actions">
+      <label class="date-picker">
+        <span>Date</span>
+        <input id="trackDate" type="date">
+      </label>
+      <button id="logoutButton" class="logout-button" type="button">Logout</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="summary-grid" aria-label="Daily summary">
+      <article class="metric">
+        <span>Calories</span>
+        <strong id="caloriesTotal">0</strong>
+        <progress id="caloriesProgress" value="0" max="100"></progress>
+      </article>
+      <article class="metric">
+        <span>Protein</span>
+        <strong id="proteinTotal">0g</strong>
+        <progress id="proteinProgress" value="0" max="100"></progress>
+      </article>
+      <article class="metric">
+        <span>Workout</span>
+        <strong id="workoutTotal">0 min</strong>
+        <small id="burnedTotal">0 kcal burned</small>
+      </article>
+      <article class="metric">
+        <span>Water</span>
+        <strong id="waterTotal">0 ml</strong>
+        <progress id="waterProgress" value="0" max="100"></progress>
+      </article>
+    </section>
+
+    <section class="layout">
+      <div class="panel">
+        <div class="panel-heading">
+          <h2>Profile and Goals</h2>
+          <span id="profileStatus" class="status">Ready</span>
+        </div>
+        <form id="profileForm" class="form-grid">
+          <input name="name" placeholder="Name" required>
+          <input name="age" type="number" placeholder="Age">
+          <select name="gender">
+            <option value="">Gender</option>
+            <option>Female</option>
+            <option>Male</option>
+            <option>Other</option>
+          </select>
+          <input name="height_cm" type="number" step="0.1" placeholder="Height cm">
+          <input name="weight_kg" type="number" step="0.1" placeholder="Weight kg">
+          <input name="goal" placeholder="Goal">
+          <input name="calorie_goal" type="number" placeholder="Daily calories">
+          <input name="protein_goal" type="number" placeholder="Protein goal g">
+          <input name="water_goal_ml" type="number" placeholder="Water goal ml">
+          <button type="submit">Save Profile</button>
+        </form>
+      </div>
+
+      <div class="panel meal-redesign-panel">
+        <div class="panel-heading">
+          <h2>Add Meal</h2>
+          <span class="help-text">Dynamic quantity calculator</span>
+        </div>
+        
+        <!-- Favorites and Recents Container -->
+        <div class="quick-food-tags" id="quickFoodTags">
+          <div class="tag-section fav-section">
+            <span class="tag-label">⭐ Favorites:</span>
+            <div id="favFoodsList" class="tag-list"><span class="empty-tag-msg">No favorites yet</span></div>
+          </div>
+          <div class="tag-section recent-section">
+            <span class="tag-label">🕒 Recent:</span>
+            <div id="recentFoodsList" class="tag-list"><span class="empty-tag-msg">No recents yet</span></div>
+          </div>
+        </div>
+
+        <form id="mealForm" class="meal-redesign-form">
+          <div class="form-row main-fields">
+            <div class="form-group">
+              <label for="mealTypeSelect">Meal Type</label>
+              <select name="meal_type" id="mealTypeSelect" required>
+                <option>Breakfast</option>
+                <option>Lunch</option>
+                <option>Dinner</option>
+                <option>Snack</option>
+              </select>
+            </div>
+            
+            <div class="form-group search-group">
+              <label for="foodNameInput">Food Name</label>
+              <div class="input-spinner-wrapper">
+                <input name="food_name" id="foodNameInput" placeholder="Search or type food..." autocomplete="off" required>
+                <span class="spinner hidden" id="nutritionSpinner"></span>
+                <button type="button" class="fav-toggle-btn" id="favToggleBtn" title="Add to favorites">☆</button>
+              </div>
+              <!-- Autocomplete suggestions dropdown -->
+              <div class="autocomplete-dropdown hidden" id="autocompleteDropdown"></div>
+            </div>
+          </div>
+
+          <!-- Measurement Type Selector -->
+          <div class="measurement-section">
+            <label class="section-label">Measure Intake</label>
+            <div class="measurement-toggle" role="radiogroup" aria-label="Measurement Type">
+              <button type="button" class="toggle-option active" data-unit="servings" role="radio" aria-checked="true">By Bowls/Servings</button>
+              <button type="button" class="toggle-option" data-unit="grams" role="radio" aria-checked="false">By Grams</button>
+            </div>
+          </div>
+
+          <!-- Quantity Stepper and Quick Select Pills -->
+          <div class="quantity-section">
+            <div class="quantity-stepper-wrapper">
+              <label id="quantityLabel">Quantity</label>
+              <div class="stepper-controls">
+                <button type="button" class="stepper-btn minus" id="stepperMinus" aria-label="Decrease quantity">−</button>
+                <input type="number" step="any" id="quantityInput" name="display_quantity" value="1" min="0.1" required>
+                <span class="stepper-unit" id="quantityUnitLabel">Bowl(s)</span>
+                <button type="button" class="stepper-btn plus" id="stepperPlus" aria-label="Increase quantity">+</button>
+              </div>
+            </div>
+            
+            <div class="quick-pills-wrapper">
+              <span class="pills-label">Quick Select</span>
+              <div class="pills-container" id="quickPillsContainer">
+                <!-- Injected via JavaScript based on active measurement mode -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Real-time nutrition preview / form inputs -->
+          <div class="macros-grid">
+            <div class="nutrition-field" data-highlight="false">
+              <label for="caloriesInput">
+                <span class="field-icon">🔥</span>
+                <span class="field-label">Calories</span>
+              </label>
+              <div class="input-unit-wrapper">
+                <input id="caloriesInput" name="calories" type="number" placeholder="0" required>
+                <span class="field-unit">kcal</span>
+              </div>
+            </div>
+
+            <div class="nutrition-field" data-highlight="false">
+              <label for="proteinInput">
+                <span class="field-icon">🍗</span>
+                <span class="field-label">Protein</span>
+              </label>
+              <div class="input-unit-wrapper">
+                <input id="proteinInput" name="protein_g" type="number" step="0.1" placeholder="0">
+                <span class="field-unit">g</span>
+              </div>
+            </div>
+
+            <div class="nutrition-field" data-highlight="false">
+              <label for="carbsInput">
+                <span class="field-icon">🍞</span>
+                <span class="field-label">Carbs</span>
+              </label>
+              <div class="input-unit-wrapper">
+                <input id="carbsInput" name="carbs_g" type="number" step="0.1" placeholder="0">
+                <span class="field-unit">g</span>
+              </div>
+            </div>
+
+            <div class="nutrition-field" data-highlight="false">
+              <label for="fatsInput">
+                <span class="field-icon">🥑</span>
+                <span class="field-label">Fats</span>
+              </label>
+              <div class="input-unit-wrapper">
+                <input id="fatsInput" name="fats_g" type="number" step="0.1" placeholder="0">
+                <span class="field-unit">g</span>
+              </div>
+            </div>
+          </div>
+
+          <button type="submit" class="submit-meal-btn">Add Meal</button>
+        </form>
+      </div>
+
+      <div class="panel workout-redesign-panel">
+        <div class="panel-heading">
+          <h2>Add Workout</h2>
+          <span class="help-text">Intelligent calorie calculator</span>
+        </div>
+        <form id="workoutForm" class="workout-redesign-form">
+          <div class="form-row main-fields">
+            <div class="form-group">
+              <label for="workoutActivityInput">Activity</label>
+              <input name="activity" id="workoutActivityInput" placeholder="Walking, Running..." autocomplete="off" required>
+            </div>
+            <div class="form-group">
+              <label for="workoutMinutesInput">Minutes</label>
+              <input name="duration_minutes" id="workoutMinutesInput" type="number" placeholder="Duration (min)" min="1" required>
+            </div>
+          </div>
+          <div class="form-row main-fields">
+            <div class="form-group select-group">
+              <label for="workoutIntensitySelect">Intensity</label>
+              <select name="intensity" id="workoutIntensitySelect">
+                <option>Low</option>
+                <option selected>Medium</option>
+                <option>High</option>
+              </select>
+            </div>
+            <div class="form-group calorie-input-group">
+              <label for="workoutCaloriesInput">Calories Burned</label>
+              <div class="input-spinner-wrapper">
+                <input name="calories_burned" id="workoutCaloriesInput" type="number" placeholder="Calculated burn..." required>
+                <span class="spinner hidden" id="workoutCalorieSpinner"></span>
+              </div>
+            </div>
+          </div>
+          <p class="workout-help-text">Calories are estimated based on workout intensity and duration.</p>
+          <button type="submit" class="submit-workout-btn">Add Workout</button>
+        </form>
+      </div>
+
+      <div class="panel">
+        <div class="panel-heading">
+          <h2>Hydration</h2>
+        </div>
+        <form id="waterForm" class="inline-form">
+          <input name="amount_ml" type="number" placeholder="Amount ml" required>
+          <button type="submit">Log Water</button>
+        </form>
+      </div>
+    </section>
+
+    <section class="records">
+      <div class="panel">
+        <h2>Meals</h2>
+        <div id="mealList" class="list"></div>
+      </div>
+      <div class="panel">
+        <h2>Workouts</h2>
+        <div id="workoutList" class="list"></div>
+      </div>
+      <div class="panel">
+        <h2>Water Logs</h2>
+        <div id="waterList" class="list"></div>
+      </div>
+    </section>
+  </main>
+  </div>
+
+  <div id="toast" role="status" aria-live="polite"></div>
+  <script src="app.js"></script>
+</body>
+</html>

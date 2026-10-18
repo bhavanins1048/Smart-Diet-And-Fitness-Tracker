@@ -1,0 +1,22 @@
+# Dependencies
+node_modules/
+Project/node_modules/
+
+# Environment files
+.env
+.env.local
+Project/.env
+
+# Database files
+*.sqlite
+*.sqlite3
+*.db
+Project/db/*.sqlite
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
