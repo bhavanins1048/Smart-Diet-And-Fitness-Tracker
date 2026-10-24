@@ -12,6 +12,7 @@ Project/.env
 *.sqlite3
 *.db
 Project/db/*.sqlite
+*fitness_data.json
 
 # Logs
 *.log

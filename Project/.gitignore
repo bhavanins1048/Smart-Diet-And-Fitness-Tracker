@@ -10,6 +10,7 @@ node_modules/
 *.sqlite3
 *.db
 db/*.sqlite
+*fitness_data.json
 
 # Logs
 *.log

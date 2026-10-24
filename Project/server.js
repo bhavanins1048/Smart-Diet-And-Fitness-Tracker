@@ -25,18 +25,20 @@ const mysqlPool = mysql.createPool({
   namedPlaceholders: true
 });
 
+const isServerless = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
+
 const pool = {
   async query(sql, params) {
-    if (useSqlite) {
+    if (useSqlite && sqliteInstance) {
       return sqliteInstance.query(sql, params);
     }
     try {
       return await mysqlPool.query(sql, params);
     } catch (err) {
-      if (err.code === 'ECONNREFUSED' || err.code === 'ENOTFOUND' || err.code === 'ER_ACCESS_DENIED_ERROR') {
-        console.warn('MySQL connection failed, falling back to SQLite database:', err.message);
+      if (err.code === 'ECONNREFUSED' || err.code === 'ENOTFOUND' || err.code === 'ER_ACCESS_DENIED_ERROR' || err.code === 'ETIMEDOUT') {
+        console.warn('MySQL connection failed, falling back to SQLite/Memory database:', err.message);
         useSqlite = true;
-        sqliteInstance = sqlitePool.createPool();
+        if (!sqliteInstance) sqliteInstance = sqlitePool.createPool();
         return sqliteInstance.query(sql, params);
       }
       throw err;
@@ -44,6 +46,7 @@ const pool = {
   }
 };
 
+app.set('trust proxy', 1);
 app.use(cors());
 app.use(express.json());
 app.use(session({
@@ -51,11 +54,36 @@ app.use(session({
   resave: false,
   saveUninitialized: false,
   cookie: {
-    secure: false,
-    httpOnly: true
+    secure: 'auto',
+    httpOnly: true,
+    sameSite: 'lax'
   }
 }));
+
+let initDbPromise = null;
+const ensureDbReady = () => {
+  if (!initDbPromise) {
+    initDbPromise = ensureAuthColumns().catch((err) => {
+      console.warn('Database initialization warning:', err.message);
+    });
+  }
+  return initDbPromise;
+};
+
+app.use(async (req, res, next) => {
+  try {
+    await ensureDbReady();
+  } catch (err) {
+    console.warn('DB initialization wait warning:', err.message);
+  }
+  next();
+});
+
 app.use(express.static(path.join(__dirname, 'public')));
+
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
 
 const asyncHandler = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
 
@@ -456,27 +484,30 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Server error', details: err.message });
 });
 
-let server;
+module.exports = app;
 
-const keepAlive = setInterval(() => {}, 60 * 60 * 1000);
+if (!isServerless) {
+  let server;
+  const keepAlive = setInterval(() => {}, 60 * 60 * 1000);
 
-process.on('SIGTERM', () => {
-  clearInterval(keepAlive);
-  if (!server) {
-    process.exit(0);
-    return;
-  }
-  server.close(() => process.exit(0));
-});
-
-ensureAuthColumns()
-  .then(() => {
-    server = app.listen(port, () => {
-      console.log(`Smart tracker running at http://localhost:${port}`);
-    });
-  })
-  .catch((error) => {
+  process.on('SIGTERM', () => {
     clearInterval(keepAlive);
-    console.error('Database setup failed:', error.message);
-    process.exit(1);
+    if (!server) {
+      process.exit(0);
+      return;
+    }
+    server.close(() => process.exit(0));
   });
+
+  ensureDbReady()
+    .then(() => {
+      server = app.listen(port, () => {
+        console.log(`Smart tracker running at http://localhost:${port}`);
+      });
+    })
+    .catch((error) => {
+      clearInterval(keepAlive);
+      console.error('Database setup failed:', error.message);
+      process.exit(1);
+    });
+}
